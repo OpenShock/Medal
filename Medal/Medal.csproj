@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnableDefaultCssItems>false</EnableDefaultCssItems>
+        <AssemblyName>OpenShock.Desktop.Modules.Medal</AssemblyName>
+        <RootNamespace>OpenShock.Desktop.Modules.Medal</RootNamespace>
+        <Company>OpenShock</Company>
+        <Product>Medal</Product>
+
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <Version>1.0.0-rc.1</Version>
+
+        <ResourceLanguages>en</ResourceLanguages>
+        <SatelliteResourceLanguages>en-US;en</SatelliteResourceLanguages>
+        <IsPackable>false</IsPackable>
+
+        <Configurations>Debug;Release</Configurations>
+
+        <Platforms>AnyCPU</Platforms>
+        <TargetFramework>net9.0</TargetFramework>
+        <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+        <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="OpenShock.Desktop.ModuleBase" Version="1.0.0-preview.5" />
+    </ItemGroup>
+
+</Project>
