@@ -1,0 +1,1 @@
+copy Medal\bin\Debug\net9.0\OpenShock.Desktop.Modules.Medal.dll %appdata%\OpenShock\Desktop\modules\openshock.desktop.modules.medal\OpenShock.Desktop.Modules.Medal.dll

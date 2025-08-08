@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -25,7 +25,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="OpenShock.Desktop.ModuleBase" Version="1.0.0-preview.5" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
+      <PackageReference Include="OpenShock.Desktop.ModuleBase" Version="1.0.0" />
+      <PackageReference Include="MudBlazor" Version="8.9.0" />
     </ItemGroup>
 
 </Project>

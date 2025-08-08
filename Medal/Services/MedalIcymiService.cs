@@ -9,14 +9,14 @@ namespace OpenShock.Desktop.Modules.Medal.Services;
 public sealed class MedalIcymiService
 {
     private readonly ILogger<MedalIcymiService> _logger;
-    private readonly IModuleConfig<MedalIcymi> _moduleConfig;
+    private readonly IModuleConfig<MedalIcymiConfig> _moduleConfig;
     private static readonly HttpClient HttpClient = new();
     private const string BaseUrl = "http://localhost:12665/api/v1";
     // these are publicly generated and are not sensitive.
     private const string PubApiKeyVrc = "pub_x4PTxSGVk6sl8BYg5EB5qsn8QIVz4kRi";
     private const string PubApiKeyCvr = "pub_LRG3bA6XjoVSkSU4JuXmL51tJdGJWdVQ"; 
 
-    public MedalIcymiService(ILogger<MedalIcymiService> logger, IModuleConfig<MedalIcymi> moduleConfig)
+    public MedalIcymiService(ILogger<MedalIcymiService> logger, IModuleConfig<MedalIcymiConfig> moduleConfig)
     {
         _logger = logger;
         _moduleConfig = moduleConfig;
