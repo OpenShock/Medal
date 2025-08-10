@@ -1,0 +1,146 @@
+﻿@using System.Globalization
+@using OpenShock.Desktop.ModuleBase
+@using OpenShock.Desktop.ModuleBase.Config
+@using OpenShock.Desktop.Modules.Medal.Config
+@using OpenShock.Desktop.Modules.Medal.Services.MedalApi
+
+<MudPaper Outlined="true" Class="rounded-lg mud-paper-padding">
+    <MudText>Medal.TV ICYMI (Automatic bookmarking and clip capture)</MudText>
+    <MudDivider/>
+
+    <MudSwitch Class="option-width option-checkbox-height" @bind-Value="ModuleConfig.Config.Enabled"
+               Label="ICYMI Enabled" @bind-Value:after="OnSettingsValueChange" Color="Color.Primary"/>
+
+    <div style="display: flex; width: 600px; padding-top: 20px;">
+        <MudTextField Class="option-width" Variant="Variant.Filled" @bind-Value="ModuleConfig.Config.Name"
+                      Label="Clip Name" @bind-Value:after="OnSettingsValueChange"/>
+        <MudTextField Class="option-width" Variant="Variant.Filled"
+                      @bind-Value="ModuleConfig.Config.Description" Label="Clip Description"
+                      @bind-Value:after="OnSettingsValueChange"/>
+        <MudTextField Class="option-width" Variant="Variant.Filled"
+                      @bind-Value="ModuleConfig.Config.ClipDuration" Label="Clip Duration (sec)"
+                      @bind-Value:after="OnSettingsValueChange"/>
+    </div>
+
+    <div style="display: flex; width: 600px; padding-top: 20px;">
+        <MudSwitch @bind-Value="ModuleConfig.Config.IncludeDurationInDelay" @bind-Value:after="OnSettingsValueChange"
+                   Color="Color.Primary">
+            Include Command Duration in Delay
+        </MudSwitch>
+
+        <DebouncedSlider T="double" Size="Size.Large" Class="openshock-slider-length" @bind-SliderValue="TriggerDelay"
+                         OnSaveAction="_ => OnSettingsValueChange()"
+                         Min="0" Max="30" Step="0.1">
+            Trigger Delay: @(ModuleConfig.Config.TriggerDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture))s
+        </DebouncedSlider>
+    </div>
+
+    <div style="display: flex; width: 600px; padding-top: 20px;">
+        <MudSelect Class="option-width" Dense="true" Variant="Variant.Filled"
+                   @bind-Value="ModuleConfig.Config.TriggerAction" Label="Capture Type"
+                   @bind-Value:after="OnSettingsValueChange">
+            @foreach (IcymiTriggerAction triggerAction in Enum.GetValues(typeof(IcymiTriggerAction)))
+            {
+                <MudSelectItem Value="@triggerAction">@triggerAction</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudSelect Class="option-width" Dense="true" Variant="Variant.Filled"
+                   @bind-Value="ModuleConfig.Config.AlertType" Label="Alert Type"
+                   @bind-Value:after="OnSettingsValueChange">
+            @foreach (IcymiAlertType alertType in Enum.GetValues(typeof(IcymiAlertType)))
+            {
+                <MudSelectItem Value="@alertType">@alertType</MudSelectItem>
+            }
+        </MudSelect>
+    </div>
+    <div style="width: 600px; padding-top: 20px;">
+        <MudText>Target Game</MudText>
+        <MudDivider/>
+        <MudSelect Class="option-width" Dense="true" Variant="Variant.Filled"
+                   @bind-Value="ModuleConfig.Config.Game" Label="Record for"
+                   @bind-Value:after="OnSettingsValueChange">
+            @foreach (var icymiGame in ModuleConfig.Config.GameKeys.Keys)
+            {
+                <MudSelectItem Value="@icymiGame">@icymiGame</MudSelectItem>
+            }
+        </MudSelect>
+    </div>
+
+    <MudSimpleTable Hover="true" Dense="true" FixedHeader="true" Style="height:300px; width: 600px; padding-top: 20px;">
+        <thead>
+        <tr>
+            <th>Game</th>
+            <th style="width: 200px;">Public API Key</th>
+            <th style="width: 0"></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in ModuleConfig.Config.GameKeys)
+        {
+            <tr>
+                <td>@row.Key</td>
+                <td>@row.Value</td>
+                <td>
+                    <MudIconButton Size="Size.Small" OnClick="() => RemoveGameKey(row.Key)"
+                                   Icon="@Icons.Material.Filled.RemoveCircleOutline"></MudIconButton>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </MudSimpleTable>
+    
+    @if (!_addingNew)
+    {
+        <MudButton OnClick="AddNewClick">Add Game</MudButton>
+    }
+    else
+    {
+        <MudSelect>
+            @foreach(var category in _categories)
+            {
+                <MudSelectItem Value="@category.CategoryName">@category.CategoryName</MudSelectItem>
+            }
+        </MudSelect>
+        
+        <MudButton></MudButton>
+    }
+
+</MudPaper>
+
+@code {
+
+    [ModuleInject] private IModuleConfig<MedalIcymiConfig> ModuleConfig { get; set; } = null!;
+    
+    [ModuleInject] private IMedalApiService MedalApiService { get; set; } = null!;
+    
+    private bool _addingNew = false;
+    
+    private IReadOnlyList<CategoryItem> _categories = [];
+
+    public double TriggerDelay
+    {
+        get => ModuleConfig.Config.TriggerDelay.TotalSeconds;
+        set => ModuleConfig.Config.TriggerDelay = TimeSpan.FromSeconds(value);
+    }
+
+    private void OnSettingsValueChange()
+    {
+        ModuleConfig.SaveDeferred();
+    }
+
+    private async Task RemoveGameKey(string game)
+    {
+        ModuleConfig.Config.GameKeys.Remove(game);
+        await ModuleConfig.Save();
+    }
+
+    private async Task AddNewClick(MouseEventArgs obj)
+    {
+        _categories = [];
+        _addingNew = true;
+
+        _categories = await MedalApiService.GetCategoriesAsync();
+    }
+
+}

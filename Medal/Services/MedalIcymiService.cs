@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using OpenShock.Desktop.ModuleBase.Config;
+using OpenShock.Desktop.ModuleBase.Models;
 using OpenShock.Desktop.Modules.Medal.Config;
 
 namespace OpenShock.Desktop.Modules.Medal.Services;
@@ -12,38 +13,51 @@ public sealed class MedalIcymiService
     private readonly IModuleConfig<MedalIcymiConfig> _moduleConfig;
     private static readonly HttpClient HttpClient = new();
     private const string BaseUrl = "http://localhost:12665/api/v1";
-    // these are publicly generated and are not sensitive.
-    private const string PubApiKeyVrc = "pub_x4PTxSGVk6sl8BYg5EB5qsn8QIVz4kRi";
-    private const string PubApiKeyCvr = "pub_LRG3bA6XjoVSkSU4JuXmL51tJdGJWdVQ"; 
 
     public MedalIcymiService(ILogger<MedalIcymiService> logger, IModuleConfig<MedalIcymiConfig> moduleConfig)
     {
         _logger = logger;
         _moduleConfig = moduleConfig;
-        switch (_moduleConfig.Config.Game)
-        {
-            case IcymiGame.VRChat:
-                HttpClient.DefaultRequestHeaders.Add("publicKey", PubApiKeyVrc);
-                break;
-            case IcymiGame.ChilloutVR:
-                HttpClient.DefaultRequestHeaders.Add("publicKey", PubApiKeyCvr);
-                break;
-            default:
-                _logger.LogError("Game Selection was out of range. Value was: {value}", _moduleConfig.Config.Game);
-                break;
-        }
     }
 
-    public async Task TriggerMedalIcymiAction(string eventId)
+    public void ShockerTriggered(RemoteControlledShockerArgs args)
     {
+        var longestCommand = args.Logs.Max(x => x.Duration);
+        
+        var delay = _moduleConfig.Config.IncludeDurationInDelay
+            ? _moduleConfig.Config.TriggerDelay + TimeSpan.FromSeconds(longestCommand)
+            : _moduleConfig.Config.TriggerDelay;
+
+        if (!_moduleConfig.Config.GameKeys.TryGetValue(_moduleConfig.Config.Game, out var gameKeyValue))
+        {
+            _logger.LogWarning("Game key for {game} not found in configuration. Cannot trigger Medal ICYMI.", _moduleConfig.Config.Game);
+            return;
+        }
+        
+        _logger.LogInformation("Medal ICYMI Triggered: {triggerAction} with delay {delay} for {game}",
+            _moduleConfig.Config.TriggerAction, delay, _moduleConfig.Config.Game);
+        
+        Task.Run(() => TriggerMedalInternal(delay, gameKeyValue)).ContinueWith(task =>
+        {
+            if(task.IsFaulted) 
+            {
+                _logger.LogError("Error triggering Medal ICYMI: {exception}", task.Exception);
+            }
+        }, TaskContinuationOptions.OnlyOnFaulted);
+    }
+
+    private async Task TriggerMedalInternal(TimeSpan delay, string gamePublicKey)
+    {
+        if(delay != TimeSpan.Zero) await Task.Delay(delay);
+        
         var eventPayload = new
         {
-            eventId,
+            eventId = "openshock_desktop_triggered",
             eventName = _moduleConfig.Config.Name,
             
             contextTags = new
             {
-                location = _moduleConfig.Config.Game.ToString(),
+                location = gamePublicKey,
                 description = _moduleConfig.Config.Description
             },
             triggerActions = new[]

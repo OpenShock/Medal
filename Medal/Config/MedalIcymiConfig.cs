@@ -4,19 +4,25 @@ namespace OpenShock.Desktop.Modules.Medal.Config;
 public sealed class MedalIcymiConfig
 {
     public bool Enabled { get; set; } = false;
-    public string Name { get; set; } = "ShockOSC";
-    public string Description { get; set; } = "ShockOSC activated.";
+    public string Name { get; set; } = "OpenShock Desktop";
+    public string Description { get; set; } = "OpenShock activated.";
     public int ClipDuration { get; set; } = 30;
     public IcymiAlertType AlertType { get; set; } = IcymiAlertType.Default;
     public IcymiTriggerAction TriggerAction { get; set; } = IcymiTriggerAction.SaveClip;
-    public IcymiGame Game { get; set; } = IcymiGame.VRChat;
+    public string Game { get; set; } = "VRChat";
+    public IDictionary<string, string> GameKeys { get; set; } = new Dictionary<string, string>
+    {
+        { "VRChat", "pub_x4PTxSGVk6sl8BYg5EB5qsn8QIVz4kRi" },
+        { "ChilloutVR", "pub_LRG3bA6XjoVSkSU4JuXmL51tJdGJWdVQ" }
+    };
     public TimeSpan TriggerDelay { get; set; } = TimeSpan.FromSeconds(5);
     public bool IncludeDurationInDelay { get; set; } = true;
 }
 
 public enum IcymiTriggerAction
 {
-    SaveClip
+    SaveClip,
+    SaveScreenshot
 }
 
 public enum IcymiAlertType
@@ -25,10 +31,4 @@ public enum IcymiAlertType
     Disabled,
     SoundOnly,
     OverlayOnly
-}
-
-public enum IcymiGame
-{
-    VRChat,
-    ChilloutVR
 }
