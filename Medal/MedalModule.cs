@@ -41,13 +41,13 @@ public sealed class MedalModule : DesktopModuleBase
         var config = await ModuleInstanceManager.GetModuleConfig<MedalIcymiConfig>();
         ModuleServiceProvider = BuildServices(config);
 
-        await ModuleInstanceManager.OpenShock.Control.OnLocalControlledShocker.SubscribeAsync(OnLog).ConfigureAwait(false);
-        await ModuleInstanceManager.OpenShock.Control.OnRemoteControlledShocker.SubscribeAsync(OnLog).ConfigureAwait(false);
+        await ModuleInstanceManager.OpenShock.Control.OnLocalControlledShocker.SubscribeAsync(a => OnLog(a, false)).ConfigureAwait(false);
+        await ModuleInstanceManager.OpenShock.Control.OnRemoteControlledShocker.SubscribeAsync(a => OnLog(a, true)).ConfigureAwait(false);
         
         _medalIcymiService = ModuleServiceProvider.GetRequiredService<MedalIcymiService>();
     }
 
-    private Task OnLog(RemoteControlledShockerArgs remoteControlledShockerArgs)
+    private Task OnLog(RemoteControlledShockerArgs remoteControlledShockerArgs, bool remote)
     {
         if (_medalIcymiService == null)
         {
@@ -55,7 +55,7 @@ public sealed class MedalModule : DesktopModuleBase
             return Task.CompletedTask;
         }
 
-        _medalIcymiService.ShockerTriggered(remoteControlledShockerArgs);
+        _medalIcymiService.ShockerTriggered(remoteControlledShockerArgs, remote);
         return Task.CompletedTask;
     }
 

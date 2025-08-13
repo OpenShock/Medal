@@ -20,12 +20,30 @@ public sealed class MedalIcymiService
         _moduleConfig = moduleConfig;
     }
 
-    public void ShockerTriggered(RemoteControlledShockerArgs args)
+    public void ShockerTriggered(RemoteControlledShockerArgs args, bool remote)
     {
+        if (remote && !_moduleConfig.Config.Remote)
+        {
+            _logger.LogDebug("Remote control is disabled in configuration. Ignoring remote trigger.");
+            return;
+        }
+
+        if (!remote && !_moduleConfig.Config.Local)
+        {
+            _logger.LogDebug("Local control is disabled in configuration. Ignoring local trigger.");
+            return;
+        }
+
+        if (!args.Logs.Any(x => _moduleConfig.Config.EnabledControlTypes.Contains(x.Type)))
+        {
+            _logger.LogDebug("No logs match the enabled control types in configuration. Ignoring trigger.");
+            return;
+        }
+        
         var longestCommand = args.Logs.Max(x => x.Duration);
         
         var delay = _moduleConfig.Config.IncludeDurationInDelay
-            ? _moduleConfig.Config.TriggerDelay + TimeSpan.FromSeconds(longestCommand)
+            ? _moduleConfig.Config.TriggerDelay + TimeSpan.FromMilliseconds(longestCommand)
             : _moduleConfig.Config.TriggerDelay;
 
         if (!_moduleConfig.Config.GameKeys.TryGetValue(_moduleConfig.Config.Game, out var gameKeyValue))
@@ -37,7 +55,7 @@ public sealed class MedalIcymiService
         _logger.LogInformation("Medal ICYMI Triggered: {triggerAction} with delay {delay} for {game}",
             _moduleConfig.Config.TriggerAction, delay, _moduleConfig.Config.Game);
         
-        Task.Run(() => TriggerMedalInternal(delay, gameKeyValue)).ContinueWith(task =>
+        Task.Run(() => TriggerMedalInternal(delay, _moduleConfig.Config.Game, gameKeyValue)).ContinueWith(task =>
         {
             if(task.IsFaulted) 
             {
@@ -46,18 +64,18 @@ public sealed class MedalIcymiService
         }, TaskContinuationOptions.OnlyOnFaulted);
     }
 
-    private async Task TriggerMedalInternal(TimeSpan delay, string gamePublicKey)
+    private async Task TriggerMedalInternal(TimeSpan delay, string game, string gamePublicKey)
     {
         if(delay != TimeSpan.Zero) await Task.Delay(delay);
         
         var eventPayload = new
         {
-            eventId = "openshock_desktop_triggered",
+            eventId = "openshock_desktop_",
             eventName = _moduleConfig.Config.Name,
             
             contextTags = new
             {
-                location = gamePublicKey,
+                location = game,
                 description = _moduleConfig.Config.Description
             },
             triggerActions = new[]
@@ -77,7 +95,10 @@ public sealed class MedalIcymiService
 
         try
         {
-            var response = await HttpClient.PostAsync($"{BaseUrl}/event/invoke", content);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/event/invoke");
+            request.Content = content;
+            request.Headers.Add("publicKey", gamePublicKey);
+            var response = await HttpClient.SendAsync(request);
 
             _logger.LogInformation("{triggerAction} triggered.", _moduleConfig.Config.TriggerAction);
                 

@@ -1,8 +1,12 @@
 ﻿@using System.Globalization
+@using Microsoft.Extensions.Logging
 @using OpenShock.Desktop.ModuleBase
 @using OpenShock.Desktop.ModuleBase.Config
+@using OpenShock.Desktop.ModuleBase.Models
 @using OpenShock.Desktop.Modules.Medal.Config
 @using OpenShock.Desktop.Modules.Medal.Services.MedalApi
+@inject ILogger<MainTab> Logger
+@inject ISnackbar Snackbar
 
 <MudPaper Outlined="true" Class="rounded-lg mud-paper-padding">
     <MudText>Medal.TV ICYMI (Automatic bookmarking and clip capture)</MudText>
@@ -33,6 +37,29 @@
                          Min="0" Max="30" Step="0.1">
             Trigger Delay: @(ModuleConfig.Config.TriggerDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture))s
         </DebouncedSlider>
+    </div>
+    
+    <MudText>Command Origins</MudText>
+    <MudDivider/>
+    <div style="display: flex; width: 600px; padding-top: 20px;">
+        <MudSwitch @bind-Value="ModuleConfig.Config.Local" @bind-Value:after="OnSettingsValueChange"
+                   Color="Color.Primary">
+            Local
+        </MudSwitch>
+
+        <MudSwitch @bind-Value="ModuleConfig.Config.Remote" @bind-Value:after="OnSettingsValueChange"
+                   Color="Color.Primary">
+            Remote
+        </MudSwitch>
+    </div>
+    
+    <MudText>Control Types</MudText>
+    <MudDivider/>
+    <div style="display: flex; width: 600px; padding-top: 20px;">
+        @foreach(ControlType controlType in Enum.GetValues(typeof(ControlType)))
+        {
+            <ControlTypeSwitch ControlType="@controlType" />
+        }
     </div>
 
     <div style="display: flex; width: 600px; padding-top: 20px;">
@@ -67,55 +94,99 @@
         </MudSelect>
     </div>
 
-    <MudSimpleTable Hover="true" Dense="true" FixedHeader="true" Style="height:300px; width: 600px; padding-top: 20px;">
-        <thead>
-        <tr>
-            <th>Game</th>
-            <th style="width: 200px;">Public API Key</th>
-            <th style="width: 0"></th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var row in ModuleConfig.Config.GameKeys)
-        {
+    <div style="width: 600px; padding-top: 20px;">
+        <MudText>Available Games</MudText>
+        <MudDivider/>
+        <MudSimpleTable Hover="true" Dense="true" FixedHeader="true" Style="height:300px;">
+            <thead>
             <tr>
-                <td>@row.Key</td>
-                <td>@row.Value</td>
-                <td>
-                    <MudIconButton Size="Size.Small" OnClick="() => RemoveGameKey(row.Key)"
-                                   Icon="@Icons.Material.Filled.RemoveCircleOutline"></MudIconButton>
-                </td>
+                <th>Game</th>
+                <th style="width: 200px;">Public API Key</th>
+                <th style="width: 0"></th>
             </tr>
-        }
-        </tbody>
-    </MudSimpleTable>
-    
-    @if (!_addingNew)
-    {
-        <MudButton OnClick="AddNewClick">Add Game</MudButton>
-    }
-    else
-    {
-        <MudSelect>
-            @foreach(var category in _categories)
+            </thead>
+            <tbody>
+            @foreach (var row in ModuleConfig.Config.GameKeys)
             {
-                <MudSelectItem Value="@category.CategoryName">@category.CategoryName</MudSelectItem>
+                <tr>
+                    <td>@row.Key</td>
+                    <td>@row.Value</td>
+                    <td>
+                        <MudIconButton Size="Size.Small" OnClick="() => RemoveGameKey(row.Key)"
+                                       Icon="@Icons.Material.Filled.RemoveCircleOutline"></MudIconButton>
+                    </td>
+                </tr>
             }
-        </MudSelect>
-        
-        <MudButton></MudButton>
-    }
+            </tbody>
+        </MudSimpleTable>
+    </div>
+
+    <div style="width: 500px;" class="mt-8">
+        @if (!_addingNew)
+        {
+            <MudButton OnClick="AddNewClick" Variant="Variant.Outlined" Color="Color.Default">Add New Game</MudButton>
+        }
+        else
+        {
+            @if (_addingNewLoading)
+            {
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            }
+            else
+            {
+                <MudButton OnClick="() => _addingNew = false" Variant="Variant.Outlined" Color="Color.Default" Class="mb-2">Cancel</MudButton>
+                
+                <MudTextField @bind-Value="_searchText" DebounceInterval="100" Placeholder="Search for game"/>
+
+                <MudSimpleTable Dense="true">
+                    <thead>
+                    <tr>
+                        <th>Game</th>
+                        <th style="width: 0"></th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    @if (_searchText.Length >= 3)
+                    {
+                        @foreach (var category in GameList)
+                        {
+                            <tr>
+                                <td>@category.CategoryName</td>
+                                <td>
+                                    <MudButton OnClick="() => AddGame(category)">Add</MudButton>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>Type at least 3 characters to search.</td>
+                            <td></td>
+                        </tr>
+                    }
+                    </tbody>
+
+                </MudSimpleTable>
+            }
+        }
+    </div>
 
 </MudPaper>
 
 @code {
 
+    private const string MedalAppUrl = "https://openshock.org";
+
     [ModuleInject] private IModuleConfig<MedalIcymiConfig> ModuleConfig { get; set; } = null!;
-    
+
     [ModuleInject] private IMedalApiService MedalApiService { get; set; } = null!;
-    
+
     private bool _addingNew = false;
-    
+    private bool _addingNewLoading = false;
+    private string _searchText = string.Empty;
+
     private IReadOnlyList<CategoryItem> _categories = [];
 
     public double TriggerDelay
@@ -123,6 +194,10 @@
         get => ModuleConfig.Config.TriggerDelay.TotalSeconds;
         set => ModuleConfig.Config.TriggerDelay = TimeSpan.FromSeconds(value);
     }
+
+    private IEnumerable<CategoryItem> GameList => _searchText.Length >= 3
+        ? _categories.Where(x => x.CategoryName.Contains(_searchText, StringComparison.InvariantCultureIgnoreCase))
+        : [];
 
     private void OnSettingsValueChange()
     {
@@ -135,12 +210,53 @@
         await ModuleConfig.Save();
     }
 
-    private async Task AddNewClick(MouseEventArgs obj)
+    private void AddNewClick(MouseEventArgs obj)
     {
         _categories = [];
+        _addingNewLoading = false;
         _addingNew = true;
 
-        _categories = await MedalApiService.GetCategoriesAsync();
+        Task.Run(async () =>
+            {
+                _addingNewLoading = true;
+                _categories = await MedalApiService.GetCategoriesAsync();
+
+                Logger.LogDebug("Fetched {count} categories from Medal API.", _categories.Count);
+
+                _addingNewLoading = false;
+                await InvokeAsync(StateHasChanged);
+            })
+            .ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Logger.LogError(task.Exception, "Error fetching categories");
+                    Snackbar.Add("Error fetching categories", Severity.Error);
+                }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+    }
+
+    private void AddGame(CategoryItem category)
+    {
+        Task.Run(() => AddGameTask(category))
+            .ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Logger.LogError(task.Exception, "Error registering app");
+                    Snackbar.Add("Error registering app", Severity.Error);
+                }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+    }
+
+    private async Task AddGameTask(CategoryItem category)
+    {
+        _addingNewLoading = true;
+        await InvokeAsync(StateHasChanged);
+        var registerRequest = await MedalApiService.RegisterAppAsync("OpenShock Desktop", MedalAppUrl, category.CategoryId);
+        ModuleConfig.Config.GameKeys[category.CategoryName] = registerRequest;
+        _addingNew = false;
+        await InvokeAsync(StateHasChanged);
     }
 
 }

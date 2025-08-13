@@ -1,4 +1,7 @@
 ﻿// ReSharper disable InconsistentNaming
+
+using OpenShock.Desktop.ModuleBase.Models;
+
 namespace OpenShock.Desktop.Modules.Medal.Config;
 
 public sealed class MedalIcymiConfig
@@ -17,6 +20,13 @@ public sealed class MedalIcymiConfig
     };
     public TimeSpan TriggerDelay { get; set; } = TimeSpan.FromSeconds(5);
     public bool IncludeDurationInDelay { get; set; } = true;
+    public IList<ControlType> EnabledControlTypes { get; set; } = new List<ControlType>
+    {
+        ControlType.Shock
+    };
+    public bool Remote { get; set; } = true;
+    public bool Local { get; set; } = true;
+    
 }
 
 public enum IcymiTriggerAction

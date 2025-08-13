@@ -1,0 +1,34 @@
+﻿@using OpenShock.Desktop.ModuleBase
+@using OpenShock.Desktop.ModuleBase.Config
+@using OpenShock.Desktop.ModuleBase.Models
+@using OpenShock.Desktop.Modules.Medal.Config
+<MudSwitch Class="option-width" @bind-Value="IsEnabled" Color="Color.Primary">
+    @ControlType.ToString()
+</MudSwitch>
+
+
+@code {
+    [ModuleInject] private IModuleConfig<MedalIcymiConfig> ModuleConfig { get; set; } = null!;
+
+    [Parameter] public ControlType ControlType { get; set; }
+
+    public bool IsEnabled
+    {
+        get => ModuleConfig.Config.EnabledControlTypes.Contains(ControlType);
+        set
+        {
+            if (value)
+            {
+                ModuleConfig.Config.EnabledControlTypes.Add(ControlType);
+            }
+            else
+            {
+                ModuleConfig.Config.EnabledControlTypes.Remove(ControlType);
+               
+            }
+            
+            ModuleConfig.SaveDeferred();
+        }
+    }
+
+}
