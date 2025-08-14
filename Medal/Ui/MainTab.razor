@@ -8,185 +8,232 @@
 @inject ILogger<MainTab> Logger
 @inject ISnackbar Snackbar
 
-<MudPaper Outlined="true" Class="rounded-lg mud-paper-padding">
-    <MudText>Medal.TV ICYMI (Automatic bookmarking and clip capture)</MudText>
-    <MudDivider/>
+<MudPaper Outlined="true" Class="settings-wrap">
 
-    <MudSwitch Class="option-width option-checkbox-height" @bind-Value="ModuleConfig.Config.Enabled"
-               Label="ICYMI Enabled" @bind-Value:after="OnSettingsValueChange" Color="Color.Primary"/>
+    <!-- Title -->
+    <MudText Typo="Typo.h6" Class="mb-2">Medal.TV ICYMI (Automatic bookmarking and clip capture)</MudText>
+    <MudDivider Class="mb-4" />
 
-    <div style="display: flex; width: 600px; padding-top: 20px;">
-        <MudTextField Class="option-width" Variant="Variant.Filled" @bind-Value="ModuleConfig.Config.Name"
-                      Label="Clip Name" @bind-Value:after="OnSettingsValueChange"/>
-        <MudTextField Class="option-width" Variant="Variant.Filled"
-                      @bind-Value="ModuleConfig.Config.Description" Label="Clip Description"
-                      @bind-Value:after="OnSettingsValueChange"/>
-        <MudTextField Class="option-width" Variant="Variant.Filled"
-                      @bind-Value="ModuleConfig.Config.ClipDuration" Label="Clip Duration (sec)"
-                      @bind-Value:after="OnSettingsValueChange"/>
-    </div>
+    <!-- GENERAL -->
+    <MudPaper Class="card" Outlined="true">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+            <MudText Typo="Typo.h6">General</MudText>
+            <MudSwitch @bind-Value="ModuleConfig.Config.Enabled"
+                       @bind-Value:after="OnSettingsValueChange"
+                       Color="Color.Primary"
+                       Label="ICYMI Enabled" />
+        </MudStack>
 
-    <div style="display: flex; width: 600px; padding-top: 20px;">
-        <MudSwitch @bind-Value="ModuleConfig.Config.IncludeDurationInDelay" @bind-Value:after="OnSettingsValueChange"
-                   Color="Color.Primary">
-            Include Command Duration in Delay
-        </MudSwitch>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudTextField Variant="Variant.Outlined" Margin="Margin.Dense"
+                              @bind-Value="ModuleConfig.Config.Name"
+                              @bind-Value:after="OnSettingsValueChange"
+                              Label="Clip Name" />
+            </MudItem>
+            <MudItem xs="12" md="5">
+                <MudTextField Variant="Variant.Outlined"  Margin="Margin.Dense"
+                              @bind-Value="ModuleConfig.Config.Description"
+                              @bind-Value:after="OnSettingsValueChange"
+                              Label="Clip Description" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudTextField Variant="Variant.Outlined" Margin="Margin.Dense"
+                              @bind-Value="ModuleConfig.Config.ClipDuration"
+                              @bind-Value:after="OnSettingsValueChange"
+                              Label="Clip Duration (sec)" />
+            </MudItem>
+        </MudGrid>
+        
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="6">
+                <MudSelect Dense="true" Variant="Variant.Outlined"  Margin="Margin.Dense"
+                           @bind-Value="ModuleConfig.Config.TriggerAction"
+                           @bind-Value:after="OnSettingsValueChange"
+                           Label="Capture Type">
+                    @foreach (IcymiTriggerAction triggerAction in Enum.GetValues(typeof(IcymiTriggerAction)))
+                    {
+                        <MudSelectItem Value="@triggerAction">@triggerAction</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect Dense="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                           @bind-Value="ModuleConfig.Config.AlertType"
+                           @bind-Value:after="OnSettingsValueChange"
+                           Label="Alert Type">
+                    @foreach (IcymiAlertType alertType in Enum.GetValues(typeof(IcymiAlertType)))
+                    {
+                        <MudSelectItem Value="@alertType">@alertType</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
 
-        <DebouncedSlider T="double" Size="Size.Large" Class="openshock-slider-length" @bind-SliderValue="TriggerDelay"
-                         OnSaveAction="_ => OnSettingsValueChange()"
-                         Min="0" Max="30" Step="0.1">
-            Trigger Delay: @(ModuleConfig.Config.TriggerDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture))s
-        </DebouncedSlider>
-    </div>
-    
-    <MudText>Command Origins</MudText>
-    <MudDivider/>
-    <div style="display: flex; width: 600px; padding-top: 20px;">
-        <MudSwitch @bind-Value="ModuleConfig.Config.Local" @bind-Value:after="OnSettingsValueChange"
-                   Color="Color.Primary">
-            Local
-        </MudSwitch>
+    <!-- TIMING -->
+    <MudPaper Class="card" Outlined="true">
+        <MudText Typo="Typo.h6" Class="mb-2">Timing</MudText>
 
-        <MudSwitch @bind-Value="ModuleConfig.Config.Remote" @bind-Value:after="OnSettingsValueChange"
-                   Color="Color.Primary">
-            Remote
-        </MudSwitch>
-    </div>
-    
-    <MudText>Control Types</MudText>
-    <MudDivider/>
-    <div style="display: flex; width: 600px; padding-top: 20px;">
-        @foreach(ControlType controlType in Enum.GetValues(typeof(ControlType)))
-        {
-            <ControlTypeSwitch ControlType="@controlType" />
-        }
-    </div>
+        <MudGrid Spacing="2" AlignItems="center">
+            <MudItem xs="12" md="5">
+                <MudSwitch @bind-Value="ModuleConfig.Config.IncludeDurationInDelay"
+                           @bind-Value:after="OnSettingsValueChange"
+                           Color="Color.Primary">
+                    Include Command Duration
+                </MudSwitch>
+            </MudItem>
+            <MudItem xs="12" md="7">
+                <DebouncedSlider T="double"
+                                 Size="Size.Medium"
+                                 @bind-SliderValue="TriggerDelay"
+                                 OnSaveAction="_ => OnSettingsValueChange()"
+                                 Min="0" Max="30" Step="0.1">
+                        Trigger Delay: @(ModuleConfig.Config.TriggerDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture))s
+                </DebouncedSlider>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
 
-    <div style="display: flex; width: 600px; padding-top: 20px;">
-        <MudSelect Class="option-width" Dense="true" Variant="Variant.Filled"
-                   @bind-Value="ModuleConfig.Config.TriggerAction" Label="Capture Type"
-                   @bind-Value:after="OnSettingsValueChange">
-            @foreach (IcymiTriggerAction triggerAction in Enum.GetValues(typeof(IcymiTriggerAction)))
-            {
-                <MudSelectItem Value="@triggerAction">@triggerAction</MudSelectItem>
-            }
-        </MudSelect>
+    <!-- ORIGINS + CONTROL TYPES -->
+    <MudGrid Spacing="2" Class="equal-row" Style="margin-bottom: 12px;">
+        <MudItem xs="12" md="6" Class="equal-col">
+            <MudPaper Class="card equal-card" Outlined="true">
+                <MudText Typo="Typo.h6" Class="mb-2">Command Origins</MudText>
+                <MudStack Row="true" Spacing="2">
+                    <MudSwitch @bind-Value="ModuleConfig.Config.Local"  @bind-Value:after="OnSettingsValueChange" Color="Color.Primary">Local</MudSwitch>
+                    <MudSwitch @bind-Value="ModuleConfig.Config.Remote" @bind-Value:after="OnSettingsValueChange" Color="Color.Primary">Remote</MudSwitch>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
 
-        <MudSelect Class="option-width" Dense="true" Variant="Variant.Filled"
-                   @bind-Value="ModuleConfig.Config.AlertType" Label="Alert Type"
-                   @bind-Value:after="OnSettingsValueChange">
-            @foreach (IcymiAlertType alertType in Enum.GetValues(typeof(IcymiAlertType)))
-            {
-                <MudSelectItem Value="@alertType">@alertType</MudSelectItem>
-            }
-        </MudSelect>
-    </div>
-    <div style="width: 600px; padding-top: 20px;">
-        <MudText>Target Game</MudText>
-        <MudDivider/>
-        <MudSelect Class="option-width" Dense="true" Variant="Variant.Filled"
-                   @bind-Value="ModuleConfig.Config.Game" Label="Record for"
-                   @bind-Value:after="OnSettingsValueChange">
+        <MudItem xs="12" md="6" Class="equal-col">
+            <MudPaper Class="card equal-card" Outlined="true">
+                <MudText Typo="Typo.h6" Class="mb-2">Control Types</MudText>
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                    @foreach (ControlType controlType in Enum.GetValues(typeof(ControlType)))
+                    {
+                        <ControlTypeSwitch ControlType="@controlType" />
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <!-- TARGET GAME -->
+    <MudPaper Class="card" Outlined="true">
+        <MudText Typo="Typo.h6" Class="mb-2">Target Game</MudText>
+        <MudSelect Dense="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                   Class="w-100"
+                   @bind-Value="ModuleConfig.Config.Game"
+                   @bind-Value:after="OnSettingsValueChange"
+                   Label="Record for">
             @foreach (var icymiGame in ModuleConfig.Config.GameKeys.Keys)
             {
                 <MudSelectItem Value="@icymiGame">@icymiGame</MudSelectItem>
             }
         </MudSelect>
-    </div>
+    </MudPaper>
 
-    <div style="width: 600px; padding-top: 20px;">
-        <MudText>Available Games</MudText>
-        <MudDivider/>
-        <MudSimpleTable Hover="true" Dense="true" FixedHeader="true" Style="height:300px;">
-            <thead>
-            <tr>
-                <th>Game</th>
-                <th style="width: 200px;">Public API Key</th>
-                <th style="width: 0"></th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var row in ModuleConfig.Config.GameKeys)
-            {
-                <tr>
-                    <td>@row.Key</td>
-                    <td>@row.Value</td>
-                    <td>
-                        <MudIconButton Size="Size.Small" OnClick="() => RemoveGameKey(row.Key)"
-                                       Icon="@Icons.Material.Filled.RemoveCircleOutline"></MudIconButton>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </MudSimpleTable>
-    </div>
+    <!-- AVAILABLE GAMES -->
+    <MudPaper Class="card" Outlined="true">
+        <MudText Typo="Typo.h6" Class="mb-2">Available Games</MudText>
 
-    <div style="width: 500px;" class="mt-8">
-        @if (!_addingNew)
-        {
-            <MudButton OnClick="AddNewClick" Variant="Variant.Outlined" Color="Color.Default">Add New Game</MudButton>
-        }
-        else
-        {
-            @if (_addingNewLoading)
+        <MudTable Dense="true" Hover="true" Class="mb-4" Items="ModuleConfig.Config.GameKeys" Elevation="0">
+            <HeaderContent>
+                <MudTh>Game</MudTh>
+                <MudTh class="col-key">Public API Key</MudTh>
+                <MudTh class="col-actions"></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Game">@context.Key</MudTd>
+                <MudTd DataLabel="Public API Key">@context.Value</MudTd>
+                <MudTd>
+                    <MudIconButton Size="Size.Small"
+                                   OnClick="() => RemoveGameKey(context.Key)"
+                                   Icon="@Icons.Material.Filled.RemoveCircleOutline" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+
+        <!-- Add new game -->
+        <MudStack Spacing="2">
+            @if (!_addingNew)
             {
-                <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+                <MudButton OnClick="AddNewClick" Variant="Variant.Outlined" Color="Color.Primary">
+                    Add New Game
+                </MudButton>
             }
             else
             {
-                <MudButton OnClick="() => _addingNew = false" Variant="Variant.Outlined" Color="Color.Default" Class="mb-2">Cancel</MudButton>
-                
-                <MudTextField @bind-Value="_searchText" DebounceInterval="100" Placeholder="Search for game"/>
+                @if (_addingNewLoading)
+                {
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                }
+                else
+                {
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudButton OnClick="() => _addingNew = false" Variant="Variant.Outlined" Color="Color.Default">
+                            Cancel
+                        </MudButton>
+                        <MudTextField @bind-Value="_searchText" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                      DebounceInterval="100"
+                                      Placeholder="Search for game"
+                                      Class="flex-1" />
+                    </MudStack>
 
-                <MudSimpleTable Dense="true">
-                    <thead>
-                    <tr>
-                        <th>Game</th>
-                        <th style="width: 0"></th>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    @if (_searchText.Length >= 3)
-                    {
-                        @foreach (var category in GameList)
-                        {
-                            <tr>
-                                <td>@category.CategoryName</td>
-                                <td>
-                                    <MudButton OnClick="() => AddGame(category)">Add</MudButton>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td>Type at least 3 characters to search.</td>
-                            <td></td>
-                        </tr>
-                    }
-                    </tbody>
-
-                </MudSimpleTable>
+                    <MudTable Dense="true" Hover="true" Items="GameList" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Game</MudTh>
+                            <MudTh class="col-actions"></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Game">@context.CategoryName</MudTd>
+                            <MudTd>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => AddGame(context)" Size="Size.Small">Add</MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
             }
-        }
-    </div>
+        </MudStack>
+    </MudPaper>
 
 </MudPaper>
 
-@code {
+<style>
+    .equal-row .equal-col { display: flex; }
+    .equal-row .equal-col .equal-card { flex: 1 1 auto; height: 100%; }
+    
+    .settings-wrap {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 16px;
+        border-radius: 12px;
+    }
 
+    .card {
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .col-key { width: 420px; }
+    .col-actions { width: 1%; white-space: nowrap; }
+
+    .flex-1 { width: 100%; }
+
+</style>
+
+@code {
     private const string MedalAppUrl = "https://openshock.org";
 
     [ModuleInject] private IModuleConfig<MedalIcymiConfig> ModuleConfig { get; set; } = null!;
-
     [ModuleInject] private IMedalApiService MedalApiService { get; set; } = null!;
 
     private bool _addingNew = false;
     private bool _addingNewLoading = false;
     private string _searchText = string.Empty;
-
     private IReadOnlyList<CategoryItem> _categories = [];
 
     public double TriggerDelay
@@ -199,10 +246,7 @@
         ? _categories.Where(x => x.CategoryName.Contains(_searchText, StringComparison.InvariantCultureIgnoreCase))
         : [];
 
-    private void OnSettingsValueChange()
-    {
-        ModuleConfig.SaveDeferred();
-    }
+    private void OnSettingsValueChange() => ModuleConfig.SaveDeferred();
 
     private async Task RemoveGameKey(string game)
     {
@@ -210,7 +254,7 @@
         await ModuleConfig.Save();
     }
 
-    private void AddNewClick(MouseEventArgs obj)
+    private void AddNewClick(MouseEventArgs _)
     {
         _categories = [];
         _addingNewLoading = false;
@@ -220,9 +264,7 @@
             {
                 _addingNewLoading = true;
                 _categories = await MedalApiService.GetCategoriesAsync();
-
                 Logger.LogDebug("Fetched {count} categories from Medal API.", _categories.Count);
-
                 _addingNewLoading = false;
                 await InvokeAsync(StateHasChanged);
             })
@@ -258,5 +300,4 @@
         _addingNew = false;
         await InvokeAsync(StateHasChanged);
     }
-
 }
