@@ -88,7 +88,7 @@
                                  Size="Size.Medium"
                                  @bind-SliderValue="TriggerDelay"
                                  OnSaveAction="_ => OnSettingsValueChange()"
-                                 Min="0" Max="30" Step="0.1">
+                                 Min="0" Max="30" Step="0.1" Style="margin-top: -29px">
                         Trigger Delay: @(ModuleConfig.Config.TriggerDelay.TotalSeconds.ToString(CultureInfo.InvariantCulture))s
                 </DebouncedSlider>
             </MudItem>
@@ -182,7 +182,7 @@
                                       Class="flex-1" />
                     </MudStack>
 
-                    <MudTable Dense="true" Hover="true" Items="GameList" Elevation="0">
+                    <MudTable Dense="true" Hover="true" Items="GameList" Elevation="0" Style="max-height: 300px">
                         <HeaderContent>
                             <MudTh>Game</MudTh>
                             <MudTh class="col-actions"></MudTh>
