@@ -75,7 +75,7 @@
     <MudPaper Class="card" Outlined="true">
         <MudText Typo="Typo.h6" Class="mb-2">Timing</MudText>
 
-        <MudGrid Spacing="2" AlignItems="center">
+        <MudGrid Spacing="2">
             <MudItem xs="12" md="5">
                 <MudSwitch @bind-Value="ModuleConfig.Config.IncludeDurationInDelay"
                            @bind-Value:after="OnSettingsValueChange"
@@ -182,7 +182,7 @@
                                       Class="flex-1" />
                     </MudStack>
 
-                    <MudTable Dense="true" Hover="true" Items="GameList" Elevation="0" Style="max-height: 300px">
+                    <MudTable Items="GameList"  Dense="true" Hover="true" Height="350px" Breakpoint="Breakpoint.Sm" HorizontalScrollbar="true">
                         <HeaderContent>
                             <MudTh>Game</MudTh>
                             <MudTh class="col-actions"></MudTh>

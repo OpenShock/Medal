@@ -13,7 +13,7 @@ using OpenShock.Desktop.Modules.Medal.Services;
 using OpenShock.Desktop.Modules.Medal.Services.MedalApi;
 using OpenShock.Desktop.Modules.Medal.Ui;
 
-[assembly:DesktopModule(typeof(MedalModule), "openshock.desktop.modules.medal", "Medal ICYMI")]
+[assembly:DesktopModule(typeof(MedalModule), "openshock.desktop.modules.medal", "Medal")]
 namespace OpenShock.Desktop.Modules.Medal;
 
 public sealed class MedalModule : DesktopModuleBase
@@ -25,16 +25,12 @@ public sealed class MedalModule : DesktopModuleBase
     {
         _logger = logger;
     }
-    
-    public override IReadOnlyCollection<NavigationItem> NavigationComponents { get; } =
-    [
-        new()
-        {
-            Name = "Settings",
-            ComponentType = typeof(MainTab),
-            Icon = IconOneOf.FromSvg(Icons.Material.Filled.Settings)
-        }
-    ];
+
+    public override IconOneOf Icon => IconOneOf.FromPath("/OpenShock/Desktop/Modules/Medal/medal.png");
+
+    public override Type? RootComponent { get; } = typeof(MainTab);
+
+    public override IReadOnlyCollection<NavigationItem> NavigationComponents { get; } = [];
         
     public override async Task Setup()
     {
