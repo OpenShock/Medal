@@ -31,7 +31,7 @@
       <PackageReference Include="OneOf" Version="3.0.271" />
       <PackageReference Include="OpenShock.Desktop.ModuleBase" Version="1.1.0" />
       <PackageReference Include="OpenShock.MinimalEvents" Version="0.0.1" />
-      <PackageReference Include="System.Reactive" Version="6.0.1" />
+      <PackageReference Include="System.Reactive" Version="6.0.2" />
     </ItemGroup>
 
     <ItemGroup>
