@@ -22,6 +22,12 @@ public sealed class MedalIcymiService
 
     public void ShockerTriggered(RemoteControlledShockerArgs args, bool remote)
     {
+        if (!_moduleConfig.Config.Enabled)
+        {
+            _logger.LogDebug("Shocker trigger is disabled");
+            return;
+        }
+        
         if (remote && !_moduleConfig.Config.Remote)
         {
             _logger.LogDebug("Remote control is disabled in configuration. Ignoring remote trigger.");
