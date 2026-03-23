@@ -41,7 +41,7 @@ jobs:
         run: dotnet publish Medal/Medal.csproj -c Release -o ./publish/
 
       - name: Upload ShockOSC artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Medal Module
           path: publish/*
